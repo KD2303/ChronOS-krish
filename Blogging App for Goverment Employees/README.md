@@ -1,4 +1,4 @@
-```markdown
+```
 # GovGazette (GovBlog) — Blogging App for Government Employees
 
 A lightweight blogging platform built with **FastAPI + Jinja2 templates + SQLite**. Government employees can **register/login**, then **create, edit, and delete** official blog/gazette posts. Logged-in employees can also **comment** on posts.
