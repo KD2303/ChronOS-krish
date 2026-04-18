@@ -1,157 +1,193 @@
-```
-# GovGazette (GovBlog) — Blogging App for Government Employees
+🏛️ GovGazette (GovBlog)
 
-A lightweight blogging platform built with **FastAPI + Jinja2 templates + SQLite**. Government employees can **register/login**, then **create, edit, and delete** official blog/gazette posts. Logged-in employees can also **comment** on posts.
+Blogging Platform for Government Employees
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-Modern%20Fast%20API-blue)](https://fastapi.tiangolo.com/)
-[![Python](https://img.shields.io/badge/Python-3.9%2B-orange)](https://www.python.org/)
-
-> Note: The folder name in this repo is currently **`Blogging App for Goverment Employees`** (misspelling of “Government”). This README matches the current repo structure.
+A lightweight blogging platform built with FastAPI + Jinja2 + SQLite, enabling government employees to securely create, manage, and discuss official blog/gazette posts.
 
 ---
 
-## Features
+🚀 Key Features
 
-### Employee authentication (Session-based)
-- Employee **registration** and **login**
-- Session management using Starlette **SessionMiddleware**
-- **Logout** clears the session
+🔐 Authentication (Session-Based)
 
-### Blog management
-- View all blogs on the homepage (latest first)
-- Create a blog post (**employees only**)
-- Edit a blog post (**only the author**)
-- Delete a blog post (**only the author**)
+- Employee registration & login
+- Secure session handling using SessionMiddleware
+- Logout functionality
 
-### Comments
-- View comments on each blog post
-- Add comments (**employees only**)
+📝 Blog Management
 
----
+- View all blogs (latest first)
+- Create new blog posts (employees only)
+- Edit/Delete posts (author-only permissions)
 
-## Tech Stack
-- **Backend:** FastAPI
-- **Templates:** Jinja2 (`Jinja2Templates`)
-- **Database:** SQLite + SQLAlchemy ORM
-- **Sessions:** Starlette `SessionMiddleware`
-- **Static files:** served from `/static`
+💬 Comments System
+
+- View comments on each blog
+- Add comments (employees only)
 
 ---
 
-## Project Structure
-```text
+🛠️ Tech Stack
+
+Layer| Technology
+Backend| FastAPI
+Templates| Jinja2
+Database| SQLite + SQLAlchemy
+Sessions| Starlette SessionMiddleware
+Static Files| "/static" directory
+
+---
+
+📁 Project Structure
+
 Blogging App for Goverment Employees/
-├── main.py                 # FastAPI app (routes + DB + models are defined here)
-├── templates/              # Jinja2 HTML templates
-├── static/                 # CSS/JS assets
-├── requirements.txt        # Python dependencies
-├── README.md               # Documentation
-├── models.py               # SQLAlchemy models (optional/for refactor)
-├── database.py             # DB setup helpers (optional/for refactor)
+│
+├── main.py              # Core FastAPI application (routes + models)
+├── templates/           # Jinja2 HTML templates
+├── static/              # CSS, JS, and assets
+├── models.py            # SQLAlchemy models (optional refactor)
+├── database.py          # DB setup helpers (optional refactor)
+├── requirements.txt     # Dependencies
+├── README.md            # Documentation
 └── LICENSE
-```
+
+«⚠️ Note: The folder name contains a typo — "Goverment" instead of "Government".»
 
 ---
 
-## Requirements
-- Python **3.9+**
+⚙️ Requirements
+
+- Python 3.9+
 - pip
 
 ---
 
-## Setup & Run Locally
+🧑‍💻 Setup & Run Locally
 
-### 1) Navigate to the project folder
-```bash
+1. Navigate to project directory
+
 cd "Blogging App for Goverment Employees"
-```
 
-### 2) Create and activate a virtual environment
-**macOS/Linux**
-```bash
+2. Create virtual environment
+
+macOS/Linux
+
 python -m venv venv
 source venv/bin/activate
-```
 
-**Windows (PowerShell)**
-```powershell
+Windows (PowerShell)
+
 python -m venv venv
 venv\Scripts\Activate.ps1
-```
 
-### 3) Install dependencies
-```bash
+3. Install dependencies
+
 pip install -r requirements.txt
-```
 
-### 4) Run the application
-```bash
+4. Run the server
+
 uvicorn main:app --reload --port 8000
-```
 
-Open:
-- http://localhost:8000
+5. Open in browser
 
----
-
-## How to Use
-
-### Register (Employee)
-1. Visit: `/register`
-2. Fill in: name, contact, sector, position, password
-3. After successful registration, you are logged in automatically.
-
-### Login
-1. Visit: `/login`
-2. Login uses:
-   - **Employee ID** (numeric)
-   - Password
-
-### Create a Blog Post
-- Visit: `/create-blog` (must be logged in)
-
-### Edit or Delete a Blog Post
-- Visit a blog detail page: `/blog/{blog_id}`
-- Edit/Delete options appear only for the blog author.
-
-### Comment on a Blog Post
-- Visit: `/blog/{blog_id}`
-- Logged-in employees can post a comment.
+http://localhost:8000
 
 ---
 
-## Routes
+📌 Usage Guide
 
-### Public
-- `GET /` — Home page (list blogs)
-- `GET /login` — Login page
-- `POST /login` — Login submission
-- `GET /register` — Register page
-- `POST /register` — Register submission
-- `GET /blog/{blog_id}` — Blog detail + comments list
+🧾 Register
 
-### Requires employee session
-- `GET /create-blog`
-- `POST /create-blog`
-- `GET /blog/{blog_id}/edit`
-- `POST /blog/{blog_id}/edit`
-- `POST /blog/{blog_id}/delete`
-- `POST /blog/{blog_id}/comment`
-- `POST /logout`
+- Go to: "/register"
+- Enter details: name, contact, sector, position, password
+- Auto-login after successful registration
+
+🔑 Login
+
+- Go to: "/login"
+- Requires:
+  - Employee ID (numeric)
+  - Password
+
+✍️ Create Blog
+
+- Route: "/create-blog"
+- Requires login
+
+✏️ Edit/Delete Blog
+
+- Route: "/blog/{blog_id}"
+- Only visible to the author
+
+💬 Comment
+
+- Route: "/blog/{blog_id}"
+- Logged-in users can comment
 
 ---
 
-## Database
-- SQLite database file: **`blog.db`**
-- Tables are created automatically at startup.
+🌐 API Routes
+
+Public Routes
+
+Method| Route| Description
+GET| "/"| Homepage (list blogs)
+GET| "/login"| Login page
+POST| "/login"| Login action
+GET| "/register"| Register page
+POST| "/register"| Register action
+GET| "/blog/{blog_id}"| Blog details + comments
+
+Protected Routes (Login Required)
+
+Method| Route
+GET| "/create-blog"
+POST| "/create-blog"
+GET| "/blog/{blog_id}/edit"
+POST| "/blog/{blog_id}/edit"
+POST| "/blog/{blog_id}/delete"
+POST| "/blog/{blog_id}/comment"
+POST| "/logout"
 
 ---
 
-## License
-MIT License (see `LICENSE`).
+🗄️ Database
+
+- File: "blog.db"
+- Uses SQLite
+- Tables auto-created on startup
 
 ---
 
-## Contributing
-Contributions are welcome. Feel free to open issues or submit pull requests to improve features, security, UI consistency, or documentation.
-```
+📜 License
+
+This project is licensed under the MIT License.
+
+---
+
+🤝 Contributing
+
+Contributions are welcome!
+
+You can:
+
+- Improve UI/UX
+- Enhance security
+- Refactor backend
+- Fix bugs or typos
+- Add new features
+
+Feel free to open issues or submit pull requests 🚀
+
+---
+
+💡 Future Improvements
+
+- Role-based access control (Admin / Employee)
+- Rich text editor for blogs
+- Search & filtering
+- Pagination
+- REST API versioning
+- Deployment (Docker + CI/CD)
+
+---
