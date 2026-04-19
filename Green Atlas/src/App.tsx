@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardProvider } from "./context/DashboardContext";
 import HomePage from "./pages/HomePage";
+import MapModulePage from "./pages/MapModulePage";
 import RiskAnalysisPage from "./pages/RiskAnalysisPage";
 import EnvironmentalTrendsPage from "./pages/EnvironmentalTrendsPage";
 import PollutionInsightsPage from "./pages/PollutionInsightsPage";
@@ -29,10 +30,14 @@ function AnimatedRoutes() {
       >
         <Routes location={location}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/map" element={<MapModulePage />} />
           <Route path="/risk/*" element={<RiskAnalysisPage />} />
           <Route path="/trends/*" element={<EnvironmentalTrendsPage />} />
           <Route path="/pollution/*" element={<PollutionInsightsPage />} />
-          <Route path="/agriculture/*" element={<AgriculturalStabilityPage />} />
+          <Route
+            path="/agriculture/*"
+            element={<AgriculturalStabilityPage />}
+          />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

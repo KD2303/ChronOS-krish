@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -68,7 +68,12 @@
 
   body {
     @apply text-foreground font-sans antialiased;
-    background: radial-gradient(circle at 10% 10%, #f0f9ff 0%, #f0fdf4 30%, #f8fdfb 100%);
+    background: radial-gradient(
+      circle at 10% 10%,
+      #f0f9ff 0%,
+      #f0fdf4 30%,
+      #f8fdfb 100%
+    );
     background-size: 200% 200%;
     animation: meshBackground 24s linear infinite;
     min-height: 100vh;
@@ -79,20 +84,34 @@
     box-shadow: 0 0 0 2px #10b981;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-display tracking-tight;
   }
 }
 
 @keyframes meshBackground {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0% 0%; }
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.2); }
-  50% { box-shadow: 0 0 14px 4px rgba(244, 63, 94, 0.18); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(244, 63, 94, 0.18);
+  }
 }
 
 .animate-pulse-soft {
@@ -129,4 +148,16 @@
 .recharts-text {
   fill: hsl(var(--muted-foreground)) !important;
   font-size: 11px;
+}
+
+/* Leaflet tile sizing guardrails against global img/svg rules */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-container img,
+.leaflet-container svg,
+.leaflet-container canvas {
+  max-width: none !important;
 }

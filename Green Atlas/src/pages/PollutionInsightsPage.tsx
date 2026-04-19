@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -7,6 +8,8 @@ import { MapPlaceholder } from "@/components/dashboard/MapPlaceholder";
 import { AlertPanel } from "@/components/dashboard/AlertPanel";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { useDashboard } from "@/context/DashboardContext";
+import { selectByTimeRange, type TimeRange } from "@/lib/timeRange";
 import { Routes, Route } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from "recharts";
 import { LayoutDashboard, Gauge, Layers, Clock, Globe, Radio, Bell } from "lucide-react";
@@ -21,7 +24,7 @@ const tabs = [
   { label: "Alerts & Forecast", path: "/pollution/alerts", icon: Bell },
 ];
 
-const weeklyAQI = [
+const weeklyAQI1y = [
   { day: "Mon", aqi: 38, pm25: 11.2 },
   { day: "Tue", aqi: 42, pm25: 12.8 },
   { day: "Wed", aqi: 35, pm25: 10.1 },
@@ -30,6 +33,34 @@ const weeklyAQI = [
   { day: "Sat", aqi: 44, pm25: 13.1 },
   { day: "Sun", aqi: 40, pm25: 11.8 },
 ];
+
+const weeklyAQIByRange: Record<TimeRange, typeof weeklyAQI1y> = {
+  "7d": weeklyAQI1y,
+  "30d": [
+    { day: "W1", aqi: 44, pm25: 12.5 },
+    { day: "W2", aqi: 48, pm25: 13.7 },
+    { day: "W3", aqi: 42, pm25: 12.1 },
+    { day: "W4", aqi: 39, pm25: 11.6 },
+    { day: "W5", aqi: 45, pm25: 12.9 },
+    { day: "W6", aqi: 52, pm25: 14.8 },
+    { day: "W7", aqi: 49, pm25: 14.1 },
+    { day: "W8", aqi: 43, pm25: 12.3 },
+  ],
+  "1y": [
+    { day: "Jan", aqi: 46, pm25: 13.1 },
+    { day: "Feb", aqi: 44, pm25: 12.7 },
+    { day: "Mar", aqi: 48, pm25: 13.5 },
+    { day: "Apr", aqi: 52, pm25: 14.8 },
+    { day: "May", aqi: 57, pm25: 16.1 },
+    { day: "Jun", aqi: 61, pm25: 17.4 },
+    { day: "Jul", aqi: 64, pm25: 18.2 },
+    { day: "Aug", aqi: 59, pm25: 16.9 },
+    { day: "Sep", aqi: 54, pm25: 15.5 },
+    { day: "Oct", aqi: 50, pm25: 14.2 },
+    { day: "Nov", aqi: 47, pm25: 13.4 },
+    { day: "Dec", aqi: 45, pm25: 12.8 },
+  ],
+};
 
 const pollutantData = [
   { name: "PM2.5", value: 12.4, unit: "µg/m³", limit: 25, pct: 49.6 },
@@ -41,17 +72,24 @@ const pollutantData = [
 ];
 
 function Overview() {
+  const { timeRange } = useDashboard();
+  const weeklyAQI = useMemo(
+    () => selectByTimeRange(timeRange, weeklyAQIByRange),
+    [timeRange],
+  );
+  const latest = weeklyAQI[weeklyAQI.length - 1] ?? { aqi: 0, pm25: 0 };
+
   return (
     <>
       <PageHeader title="Pollution Insights" subtitle="Real-time air quality monitoring and environmental trends across your active regions." />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard title="Current AQI" value="42" status="safe" subtitle="Good" change="-5%" trend="down" delay={0} />
-        <MetricCard title="PM2.5 Level" value="12.4" subtitle="µg/m³" change="-2%" trend="down" status="safe" delay={80} />
+        <MetricCard title="Current AQI" value={`${latest.aqi}`} status="safe" subtitle="Good" change="-5%" trend="down" delay={0} />
+        <MetricCard title="PM2.5 Level" value={`${latest.pm25.toFixed(1)}`} subtitle="µg/m³" change="-2%" trend="down" status="safe" delay={80} />
         <MetricCard title="Ozone (O₃)" value="38.1" subtitle="ppb" status="neutral" delay={160} />
         <MetricCard title="Humidity" value="58%" change="-1%" trend="down" delay={240} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <ChartCard title="Pollution Trends" subtitle="Last 7 days" className="lg:col-span-2" delay={100}>
+        <ChartCard title="Pollution Trends" subtitle={`Active range: ${timeRange}`} className="lg:col-span-2" delay={100}>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyAQI}>
@@ -92,6 +130,12 @@ function Overview() {
 }
 
 function AQIPage() {
+  const { timeRange } = useDashboard();
+  const weeklyAQI = useMemo(
+    () => selectByTimeRange(timeRange, weeklyAQIByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="AQI Analysis" subtitle="Detailed Air Quality Index breakdown and historical comparison." />
@@ -145,6 +189,12 @@ function PollutantsPage() {
 }
 
 function TemporalPage() {
+  const { timeRange } = useDashboard();
+  const weeklyAQI = useMemo(
+    () => selectByTimeRange(timeRange, weeklyAQIByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Temporal Trends" subtitle="Time-series analysis of pollution patterns across different timeframes." />
