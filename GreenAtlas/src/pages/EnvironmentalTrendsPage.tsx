@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -5,6 +6,8 @@ import { ChartCard } from "@/components/dashboard/ChartCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { useDashboard } from "@/context/DashboardContext";
+import { selectByTimeRange, type TimeRange } from "@/lib/timeRange";
 import { Routes, Route } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from "recharts";
 import { LayoutDashboard, Thermometer, CloudRain, Factory, Wind, Globe, TrendingUp } from "lucide-react";
@@ -34,7 +37,7 @@ const tabs = [
   { label: "Forecast", path: "/trends/forecast", icon: TrendingUp },
 ];
 
-const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+const monthlyData1y = Array.from({ length: 12 }, (_, i) => ({
   month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i],
   temp: [14.2, 14.5, 15.1, 15.8, 16.3, 16.9, 17.2, 17.0, 16.4, 15.7, 15.0, 14.4][i],
   rainfall: [82, 74, 68, 55, 45, 38, 32, 35, 48, 62, 75, 80][i],
@@ -42,7 +45,7 @@ const monthlyData = Array.from({ length: 12 }, (_, i) => ({
   aqi: [38, 35, 40, 42, 48, 52, 55, 50, 44, 40, 36, 34][i],
 }));
 
-const forecastData = Array.from({ length: 6 }, (_, i) => ({
+const forecastData1y = Array.from({ length: 6 }, (_, i) => ({
   month: ["Jan","Feb","Mar","Apr","May","Jun"][i],
   actual: i < 3 ? [15.2, 15.5, 16.1][i] : undefined,
   predicted: [15.2, 15.5, 16.1, 16.8, 17.3, 17.8][i],
@@ -50,7 +53,25 @@ const forecastData = Array.from({ length: 6 }, (_, i) => ({
   upper: [15.2, 15.5, 16.1, 17.4, 18.1, 18.8][i],
 }));
 
+const monthlyDataByRange: Record<TimeRange, typeof monthlyData1y> = {
+  "7d": monthlyData1y.slice(4, 11).map((item, i) => ({ ...item, month: `D${i + 1}` })),
+  "30d": monthlyData1y.slice(2, 10).map((item, i) => ({ ...item, month: `W${i + 1}` })),
+  "1y": monthlyData1y,
+};
+
+const forecastDataByRange: Record<TimeRange, typeof forecastData1y> = {
+  "7d": forecastData1y.slice(0, 4).map((item, i) => ({ ...item, month: `D${i + 1}` })),
+  "30d": forecastData1y.slice(0, 5).map((item, i) => ({ ...item, month: `W${i + 1}` })),
+  "1y": forecastData1y,
+};
+
 function Overview() {
+  const { timeRange } = useDashboard();
+  const monthlyData = useMemo(
+    () => selectByTimeRange(timeRange, monthlyDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Environmental Trends" subtitle="Monitoring global climate patterns and regional anomalies with high-precision sensors." />
@@ -114,6 +135,12 @@ function Overview() {
 }
 
 function TemperaturePage() {
+  const { timeRange } = useDashboard();
+  const monthlyData = useMemo(
+    () => selectByTimeRange(timeRange, monthlyDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Temperature Analysis" subtitle="Detailed global and regional temperature trend monitoring." />
@@ -141,6 +168,12 @@ function TemperaturePage() {
 }
 
 function RainfallPage() {
+  const { timeRange } = useDashboard();
+  const monthlyData = useMemo(
+    () => selectByTimeRange(timeRange, monthlyDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Rainfall Analysis" subtitle="Precipitation patterns, deficit tracking, and seasonal comparison." />
@@ -167,6 +200,12 @@ function RainfallPage() {
 }
 
 function CarbonPage() {
+  const { timeRange } = useDashboard();
+  const monthlyData = useMemo(
+    () => selectByTimeRange(timeRange, monthlyDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Carbon & Emissions" subtitle="Tracking atmospheric CO₂ concentration and emission sources." />
@@ -193,6 +232,12 @@ function CarbonPage() {
 }
 
 function AirQualityPage() {
+  const { timeRange } = useDashboard();
+  const monthlyData = useMemo(
+    () => selectByTimeRange(timeRange, monthlyDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Air Quality Trends" subtitle="Monitoring AQI and pollutant levels across sensor networks." />
@@ -251,6 +296,12 @@ function RegionalPage() {
 }
 
 function ForecastPage() {
+  const { timeRange } = useDashboard();
+  const forecastData = useMemo(
+    () => selectByTimeRange(timeRange, forecastDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Forecast & Predictions" subtitle="AI-powered climate projections with confidence intervals." />

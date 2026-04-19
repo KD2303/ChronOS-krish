@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Globe, Search, Bell, Download, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDashboard } from "@/context/DashboardContext";
+import { timeRangeOptions } from "@/lib/timeRange";
 
 const navItems = [
   { label: "Home", path: "/" },
+  { label: "Map", path: "/map" },
   { label: "Risk Analysis", path: "/risk" },
   { label: "Environmental Trends", path: "/trends" },
   { label: "Pollution Insights", path: "/pollution" },
@@ -15,6 +18,7 @@ const navItems = [
 export function TopNav() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { selectedLocation, timeRange, setTimeRange } = useDashboard();
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -34,13 +38,13 @@ export function TopNav() {
             </div>
             <span className="font-display font-bold text-slate-900 text-base">GreenAtlas</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-0.5">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "px-3 py-1.5 text-sm font-medium transition-all duration-200 border-b-2 border-transparent",
+                  "px-2.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition-all duration-200 border-b-2 border-transparent",
                   isActive(item.path)
                     ? "text-emerald-700 border-emerald-600"
                     : "text-slate-600 hover:text-slate-800 hover:border-slate-200"
@@ -53,6 +57,26 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center rounded-xl border border-slate-200 bg-white/80 p-1">
+            {timeRangeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setTimeRange(option.value)}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-colors",
+                  timeRange === option.value
+                    ? "bg-emerald-700 text-white"
+                    : "text-slate-600 hover:bg-slate-100",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="hidden lg:flex max-w-[280px] items-center rounded-xl border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-900">
+            <span className="truncate">{selectedLocation.label}</span>
+          </div>
           <div className="hidden md:flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-1.5">
             <Search className="h-3.5 w-3.5 text-slate-500" />
             <input
@@ -72,6 +96,28 @@ export function TopNav() {
       </div>
       {isOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/60 px-4 py-3">
+          <div className="mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+              Time Range
+            </p>
+            <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+              {timeRangeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setTimeRange(option.value)}
+                  className={cn(
+                    "flex-1 px-2 py-1.5 text-xs font-semibold rounded-md transition-colors",
+                    timeRange === option.value
+                      ? "bg-emerald-700 text-white"
+                      : "text-slate-600 hover:bg-slate-100",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <nav className="flex flex-col gap-1">
             {navItems.map((item) => (
               <Link

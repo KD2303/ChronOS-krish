@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ModuleLayout } from "@/components/layout/ModuleLayout";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -7,6 +8,8 @@ import { MapPlaceholder } from "@/components/dashboard/MapPlaceholder";
 import { AlertPanel } from "@/components/dashboard/AlertPanel";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { useDashboard } from "@/context/DashboardContext";
+import { selectByTimeRange, type TimeRange } from "@/lib/timeRange";
 import { Routes, Route } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from "recharts";
 import { LayoutDashboard, Droplets, CloudSun, Leaf, Thermometer, Mountain, Radio } from "lucide-react";
@@ -21,29 +24,54 @@ const tabs = [
   { label: "Sensor Monitoring", path: "/agriculture/sensors", icon: Radio },
 ];
 
-const moistureData = Array.from({ length: 12 }, (_, i) => ({
+const moistureData1y = Array.from({ length: 12 }, (_, i) => ({
   month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i],
   current: [45, 48, 44, 40, 36, 32, 28, 30, 35, 40, 44, 46][i],
   avg5yr: [42, 45, 42, 38, 35, 33, 30, 32, 36, 41, 43, 44][i],
 }));
 
-const ndviData = Array.from({ length: 12 }, (_, i) => ({
+const ndviData1y = Array.from({ length: 12 }, (_, i) => ({
   month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i],
   ndvi: [0.65, 0.68, 0.72, 0.78, 0.82, 0.80, 0.75, 0.72, 0.74, 0.76, 0.70, 0.66][i],
 }));
 
-const tempImpact = Array.from({ length: 12 }, (_, i) => ({
+const tempImpact1y = Array.from({ length: 12 }, (_, i) => ({
   month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i],
   surface: [18, 19, 21, 24, 27, 30, 32, 31, 28, 25, 21, 19][i],
   optimal: [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22][i],
 }));
 
+const moistureDataByRange: Record<TimeRange, typeof moistureData1y> = {
+  "7d": moistureData1y.slice(4, 11).map((item, i) => ({ ...item, month: `D${i + 1}` })),
+  "30d": moistureData1y.slice(2, 10).map((item, i) => ({ ...item, month: `W${i + 1}` })),
+  "1y": moistureData1y,
+};
+
+const ndviDataByRange: Record<TimeRange, typeof ndviData1y> = {
+  "7d": ndviData1y.slice(4, 11).map((item, i) => ({ ...item, month: `D${i + 1}` })),
+  "30d": ndviData1y.slice(2, 10).map((item, i) => ({ ...item, month: `W${i + 1}` })),
+  "1y": ndviData1y,
+};
+
+const tempImpactByRange: Record<TimeRange, typeof tempImpact1y> = {
+  "7d": tempImpact1y.slice(4, 11).map((item, i) => ({ ...item, month: `D${i + 1}` })),
+  "30d": tempImpact1y.slice(2, 10).map((item, i) => ({ ...item, month: `W${i + 1}` })),
+  "1y": tempImpact1y,
+};
+
 function Overview() {
+  const { timeRange } = useDashboard();
+  const moistureData = useMemo(
+    () => selectByTimeRange(timeRange, moistureDataByRange),
+    [timeRange],
+  );
+  const currentMoisture = moistureData[moistureData.length - 1]?.current ?? 0;
+
   return (
     <>
       <PageHeader title="Agricultural Stability Dashboard" subtitle="Real-time land condition and ecosystem health monitoring." />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard title="Soil Moisture" value="42%" change="+2.4%" trend="up" status="safe" subtitle="Normal range" delay={0} />
+        <MetricCard title="Soil Moisture" value={`${currentMoisture}%`} change="+2.4%" trend="up" status="safe" subtitle="Normal range" delay={0} />
         <MetricCard title="Drought Risk" value="Low" status="safe" subtitle="Stable" delay={80} />
         <MetricCard title="NDVI Index" value="0.78" change="+1.2%" trend="up" status="safe" subtitle="Satellite verified" delay={160} />
         <MetricCard title="Surface Temp" value="24°C" status="neutral" subtitle="Peak afternoon avg" delay={240} />
@@ -149,6 +177,12 @@ function Overview() {
 }
 
 function MoisturePage() {
+  const { timeRange } = useDashboard();
+  const moistureData = useMemo(
+    () => selectByTimeRange(timeRange, moistureDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Soil Moisture Analysis" subtitle="Comparing current soil saturation levels against 5-year seasonal averages." />
@@ -201,6 +235,12 @@ function DroughtPage() {
 }
 
 function NDVIPage() {
+  const { timeRange } = useDashboard();
+  const ndviData = useMemo(
+    () => selectByTimeRange(timeRange, ndviDataByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Vegetation Health (NDVI)" subtitle="Normalized Difference Vegetation Index from satellite verification." />
@@ -233,6 +273,12 @@ function NDVIPage() {
 }
 
 function TempImpactPage() {
+  const { timeRange } = useDashboard();
+  const tempImpact = useMemo(
+    () => selectByTimeRange(timeRange, tempImpactByRange),
+    [timeRange],
+  );
+
   return (
     <>
       <PageHeader title="Temperature Impact" subtitle="Surface temperature effects on crop health and growth cycles." />
