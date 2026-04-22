@@ -1,2 +1,1417 @@
-!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Focus Tracker — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #6c63ff;
+      --primary-dark: #574fd6;
+      --primary-light: #a29bfe;
+      --accent: #fd79a8;
+      --success: #00b894;
+      --warning: #fdcb6e;
+      --danger: #e17055;
+      --dark: #0f0e17;
+      --dark-2: #1a1929;
+      --dark-3: #252438;
+      --dark-4: #302f47;
+      --text: #e8e6f0;
+      --text-muted: #8b89a0;
+      --border: rgba(255,255,255,0.07);
+      --card-bg: rgba(37,36,56,0.85);
+      --sidebar-w: 260px;
+    }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 20% 20%, rgba(108,99,255,0.12) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 80%, rgba(253,121,168,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 50%, rgba(0,184,148,0.05) 0%, transparent 60%);
+      animation: bgFloat 20s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes bgFloat {
+      0% { transform: translate(0,0) rotate(0deg); }
+      100% { transform: translate(2%, 2%) rotate(1deg); }
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--dark-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.4);
+    }
+
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo-text span { color: var(--primary-light); }
+
+    .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 8px 10px 4px;
+      margin-top: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 3px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .nav-item i { width: 18px; text-align: center; font-size: 15px; }
+
+    .nav-item:hover {
+      background: var(--dark-3);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(108,99,255,0.25), rgba(253,121,168,0.1));
+      color: var(--primary-light);
+      border: 1px solid rgba(108,99,255,0.25);
+    }
+
+    .nav-item.active i { color: var(--primary-light); }
+
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-pill {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      background: var(--dark-3);
+      border-radius: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+
+    .user-name { font-size: 13px; font-weight: 600; }
+    .user-role { font-size: 11px; color: var(--text-muted); }
+
+    /* Main content */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: rgba(15,14,23,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .topbar-title { font-size: 20px; font-weight: 700; }
+    .topbar-date { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+    .btn-refresh {
+      background: var(--dark-3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .btn-refresh:hover { background: var(--dark-4); border-color: var(--primary); color: var(--primary-light); }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    /* Page container */
+    .page { display: none; padding: 28px; }
+    .page.active { display: block; }
+
+    /* Stat cards */
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      border-radius: 0 16px 0 80px;
+      opacity: 0.15;
+    }
+
+    .stat-card.focus::before { background: var(--primary); }
+    .stat-card.total::before { background: var(--text-muted); }
+    .stat-card.productive::before { background: var(--success); }
+    .stat-card.distracting::before { background: var(--danger); }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-card.focus .stat-value { color: var(--primary-light); }
+    .stat-card.total .stat-value { color: var(--text); }
+    .stat-card.productive .stat-value { color: var(--success); }
+    .stat-card.distracting .stat-value { color: var(--danger); }
+
+    .stat-sub { font-size: 12px; color: var(--text-muted); }
+
+    .stat-icon {
+      position: absolute;
+      top: 20px; right: 20px;
+      font-size: 20px;
+      opacity: 0.7;
+    }
+
+    .stat-card.focus .stat-icon { color: var(--primary-light); }
+    .stat-card.total .stat-icon { color: var(--text-muted); }
+    .stat-card.productive .stat-icon { color: var(--success); }
+    .stat-card.distracting .stat-icon { color: var(--danger); }
+
+    /* Score ring */
+    .score-ring-wrap {
+      display: flex; align-items: center; gap: 20px;
+    }
+
+    .score-ring {
+      position: relative;
+      width: 72px; height: 72px;
+      flex-shrink: 0;
+    }
+
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring-bg { stroke: var(--dark-3); }
+    .score-ring-fill { stroke: var(--primary-light); stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+
+    .score-ring-text {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary-light);
+    }
+
+    /* Chart cards */
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      backdrop-filter: blur(10px);
+    }
+
+    .chart-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-title i { color: var(--primary-light); }
+
+    /* Table */
+    .data-table {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .data-table-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .data-table-header i { color: var(--primary-light); }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    table th {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      text-align: left;
+    }
+
+    table td {
+      padding: 12px 22px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text);
+    }
+
+    table tr:last-child td { border-bottom: none; }
+    table tr:hover td { background: rgba(255,255,255,0.03); }
+
+    /* Category badge */
+    .badge-cat {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-productive { background: rgba(0,184,148,0.2); color: var(--success); }
+    .badge-distracting { background: rgba(225,112,85,0.2); color: var(--danger); }
+    .badge-neutral { background: rgba(139,137,160,0.2); color: var(--text-muted); }
+
+    /* Suggestion banner */
+    .suggestion-banner {
+      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(253,121,168,0.1));
+      border: 1px solid rgba(108,99,255,0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .suggestion-icon {
+      width: 40px; height: 40px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .suggestion-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--primary-light); margin-bottom: 4px; }
+    .suggestion-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+
+    /* Streak */
+    .streak-widget {
+      background: linear-gradient(135deg, rgba(253,203,110,0.15), rgba(225,112,85,0.1));
+      border: 1px solid rgba(253,203,110,0.2);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .streak-flame {
+      font-size: 36px;
+      line-height: 1;
+    }
+
+    .streak-days {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--warning);
+      line-height: 1;
+    }
+
+    .streak-label { font-size: 12px; color: var(--text-muted); }
+
+    /* Progress bars */
+    .mini-progress {
+      height: 4px;
+      background: var(--dark-3);
+      border-radius: 2px;
+      margin-top: 8px;
+    }
+
+    .mini-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+
+    /* Settings form */
+    .settings-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .settings-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .settings-title i { color: var(--primary-light); }
+
+    .form-control, .form-select {
+      background: var(--dark-3) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
+      border-radius: 10px !important;
+      padding: 10px 14px !important;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.2) !important;
+    }
+
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 6px; }
+
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      color: white;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(108,99,255,0.3);
+    }
+
+    .btn-primary-custom:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(108,99,255,0.4);
+    }
+
+    .btn-danger-custom {
+      background: rgba(225,112,85,0.2);
+      border: 1px solid rgba(225,112,85,0.3);
+      color: var(--danger);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-danger-custom:hover { background: rgba(225,112,85,0.3); }
+
+    /* Spinner */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid var(--dark-3);
+      border-top: 2px solid var(--primary-light);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast-msg {
+      background: var(--dark-3);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--primary);
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      animation: slideIn 0.3s ease;
+      max-width: 300px;
+    }
+
+    .toast-msg.success { border-left-color: var(--success); }
+    .toast-msg.error { border-left-color: var(--danger); }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Mobile */
+    .hamburger {
+      display: none;
+      background: var(--dark-3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .hamburger { display: flex; }
+      .page { padding: 16px; }
+      .stat-value { font-size: 24px; }
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+    }
+
+    .overlay.show { display: block; }
+
+    /* Weekly daily score chart */
+    .day-bar-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .day-row { display: flex; align-items: center; gap: 10px; }
+    .day-name { font-size: 11px; color: var(--text-muted); width: 32px; }
+    .day-bar-bg { flex: 1; height: 10px; background: var(--dark-3); border-radius: 5px; overflow: hidden; }
+    .day-bar-fill { height: 100%; border-radius: 5px; transition: width 1s ease; }
+    .day-score-label { font-size: 11px; color: var(--text-muted); width: 36px; text-align: right; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+    .empty-state p { font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="fa-solid fa-brain"></i></div>
+    <div class="logo-text">Focus<span>Tracker</span></div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" onclick="showPage('dashboard')" href="#">
+      <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </a>
+    <a class="nav-item" onclick="showPage('reports')" href="#">
+      <i class="fa-solid fa-chart-bar"></i> Reports
+    </a>
+
+    <div class="nav-section-label">Manage</div>
+    <a class="nav-item" onclick="showPage('settings')" href="#">
+      <i class="fa-solid fa-sliders"></i> Settings
+    </a>
+
+    <div class="nav-section-label">Info</div>
+    <a class="nav-item" onclick="showPage('about')" href="#">
+      <i class="fa-solid fa-circle-info"></i> About
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">U</div>
+      <div>
+        <div class="user-name">Default User</div>
+        <div class="user-role">Focus Tracker</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="d-flex align-items-center gap-3">
+      <button class="hamburger" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <div>
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="status-dot" title="API Connected"></div>
+      <span style="font-size:12px;color:var(--text-muted)">Live</span>
+      <button class="btn-refresh" onclick="refreshAll()">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="row g-3 mb-4">
+      <!-- Focus Score Card -->
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card focus">
+          <i class="fa-solid fa-bullseye stat-icon"></i>
+          <div class="stat-label">Focus Score</div>
+          <div class="score-ring-wrap">
+            <div class="score-ring">
+              <svg viewBox="0 0 72 72" width="72" height="72">
+                <circle class="score-ring-bg" cx="36" cy="36" r="30" fill="none" stroke-width="6"/>
+                <circle class="score-ring-fill" id="score-ring-fill" cx="36" cy="36" r="30" fill="none" stroke-width="6" stroke-dasharray="188.4" stroke-dashoffset="188.4"/>
+              </svg>
+              <div class="score-ring-text" id="score-ring-text">0%</div>
+            </div>
+            <div>
+              <div class="stat-value" id="focus-score-val">0</div>
+              <div class="stat-sub">Today's score</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Time -->
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card total">
+          <i class="fa-solid fa-clock stat-icon"></i>
+          <div class="stat-label">Total Time</div>
+          <div class="stat-value" id="total-time-val">0h 0m</div>
+          <div class="stat-sub">Tracked today</div>
+        </div>
+      </div>
+
+      <!-- Productive Time -->
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card productive">
+          <i class="fa-solid fa-check-circle stat-icon"></i>
+          <div class="stat-label">Productive</div>
+          <div class="stat-value" id="productive-time-val">0h 0m</div>
+          <div class="stat-sub">Focused work</div>
+          <div class="mini-progress">
+            <div class="mini-progress-fill" id="productive-bar" style="width:0%;background:var(--success)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distracting Time -->
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card distracting">
+          <i class="fa-solid fa-skull-crossbones stat-icon"></i>
+          <div class="stat-label">Distracting</div>
+          <div class="stat-value" id="distracting-time-val">0h 0m</div>
+          <div class="stat-sub">Wasted time</div>
+          <div class="mini-progress">
+            <div class="mini-progress-fill" id="distracting-bar" style="width:0%;background:var(--danger)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestion + Streak -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-8">
+        <div class="suggestion-banner">
+          <div class="suggestion-icon">🤖</div>
+          <div>
+            <div class="suggestion-label">AI Suggestion</div>
+            <div class="suggestion-text" id="suggestion-text">Loading suggestion...</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="streak-widget">
+          <div class="streak-flame">🔥</div>
+          <div>
+            <div class="streak-days" id="streak-days">0</div>
+            <div style="font-size:14px;font-weight:600;">Day Streak</div>
+            <div class="streak-label">Focus score ≥ 70 daily</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-lg-7" style="display:flex; justify-content:center;">
+        <div class="chart-card" style="width:100%; max-width:500px;">
+          
+          <div class="chart-title">
+            <i class="fa-solid fa-chart-pie"></i> Time by Website
+          </div>
+          
+          <canvas id="siteChart" 
+            style="width:100%; height:250px; max-height:300px;">
+          </canvas>
+          
+        </div>
+      </div>
+      <div class="col-12 col-lg-5" style="display:flex; justify-content:center;">
+        <div class="chart-card" style="width:100%; max-width:450px;">
+          
+          <div class="chart-title">
+            <i class="fa-solid fa-chart-donut"></i> Activity Breakdown
+          </div>
+          
+          <canvas id="breakdownChart" 
+            style="width:100%; height:240px; max-height:280px;">
+          </canvas>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Top sites table + Logs -->
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="data-table">
+          <div class="data-table-header"><i class="fa-solid fa-globe"></i> Top Websites Today</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Category</th>
+                  <th>Time</th>
+                  <th>Share</th>
+                </tr>
+              </thead>
+              <tbody id="top-sites-body">
+                <tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-globe"></i><p>No data yet</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="data-table">
+          <div class="data-table-header"><i class="fa-solid fa-list-ul"></i> Recent Activity Logs</div>
+          <div style="overflow-x:auto;max-height:320px;overflow-y:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Category</th>
+                  <th>Duration</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="activity-logs-body">
+                <tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-list-ul"></i><p>No activity logged</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS PAGE -->
+  <div class="page" id="page-reports">
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <div class="chart-card">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="chart-title mb-0"><i class="fa-solid fa-calendar-week"></i> Weekly Focus Scores</div>
+            <div style="font-size:12px;color:var(--text-muted)" id="week-range">This week</div>
+          </div>
+          <div class="day-bar-wrap" id="weekly-bars">
+            <div class="empty-state"><i class="fa-solid fa-chart-bar"></i><p>Loading weekly data...</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="stat-card focus">
+          <i class="fa-solid fa-star stat-icon"></i>
+          <div class="stat-label">Avg Focus Score</div>
+          <div class="stat-value" id="weekly-avg-score">0</div>
+          <div class="stat-sub">This week</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="stat-card total">
+          <i class="fa-solid fa-clock stat-icon"></i>
+          <div class="stat-label">Total Week Time</div>
+          <div class="stat-value" id="weekly-total-time">0h</div>
+          <div class="stat-sub">All tracked sites</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="stat-card productive">
+          <i class="fa-solid fa-trophy stat-icon"></i>
+          <div class="stat-label">Best Day Score</div>
+          <div class="stat-value" id="weekly-best-day">0</div>
+          <div class="stat-sub">Peak performance</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="data-table">
+          <div class="data-table-header" style="color:var(--success)"><i class="fa-solid fa-check-circle"></i> Top Productive Sites</div>
+          <table>
+            <thead><tr><th>Domain</th><th>Time</th><th>Share</th></tr></thead>
+            <tbody id="weekly-productive-body">
+              <tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-code"></i><p>No productive data</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="data-table">
+          <div class="data-table-header" style="color:var(--danger)"><i class="fa-solid fa-skull-crossbones"></i> Top Distracting Sites</div>
+          <table>
+            <thead><tr><th>Domain</th><th>Time</th><th>Share</th></tr></thead>
+            <tbody id="weekly-distracting-body">
+              <tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-ban"></i><p>No distracting data</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="page-settings">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <div class="settings-section">
+          <div class="settings-title"><i class="fa-solid fa-plus-circle"></i> Add Site Classification</div>
+          <div class="mb-3">
+            <label class="form-label">Domain (e.g. github.com)</label>
+            <input type="text" class="form-control" id="new-domain" placeholder="example.com"/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select class="form-select" id="new-category">
+              <option value="productive">✅ Productive</option>
+              <option value="neutral">⚪ Neutral</option>
+              <option value="distracting">❌ Distracting</option>
+            </select>
+          </div>
+          <button class="btn-primary-custom" onclick="addSiteCategory()">
+            <i class="fa-solid fa-plus me-1"></i> Add Classification
+          </button>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title"><i class="fa-solid fa-flask"></i> Test Activity Log</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Manually log browsing activity for testing</p>
+          <div class="mb-3">
+            <label class="form-label">URL</label>
+            <input type="text" class="form-control" id="test-url" placeholder="https://github.com"/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Duration (seconds)</label>
+            <input type="number" class="form-control" id="test-duration" value="120" min="1"/>
+          </div>
+          <button class="btn-primary-custom" onclick="testLogActivity()">
+            <i class="fa-solid fa-paper-plane me-1"></i> Log Activity
+          </button>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="settings-section">
+          <div class="settings-title"><i class="fa-solid fa-list"></i> Custom Site Rules</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Category</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="custom-sites-body">
+                <tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-sliders"></i><p>No custom rules yet</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title"><i class="fa-solid fa-circle-info"></i> API Configuration</div>
+          <div class="mb-3">
+            <label class="form-label">Backend URL</label>
+            <input type="text" class="form-control" id="api-url-input" value="http://localhost:8000"/>
+          </div>
+          <button class="btn-primary-custom" onclick="saveApiUrl()">
+            <i class="fa-solid fa-save me-1"></i> Save & Test Connection
+          </button>
+          <div id="connection-status" style="margin-top:12px;font-size:12px;color:var(--text-muted)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT PAGE -->
+  <div class="page" id="page-about">
+    <div class="row g-3 justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="settings-section" style="text-align:center;padding:40px">
+          <div style="font-size:60px;margin-bottom:16px">🧠</div>
+          <h2 style="font-weight:800;margin-bottom:8px">Focus Tracker</h2>
+          <p style="color:var(--text-muted);margin-bottom:24px">Track your browsing, measure your focus, own your time.</p>
+
+          <div class="row g-3 text-start mt-2">
+            <div class="col-12 col-sm-6">
+              <div style="background:var(--dark-3);border-radius:12px;padding:16px">
+                <div style="font-size:20px;margin-bottom:8px">⚡</div>
+                <div style="font-weight:600;margin-bottom:4px">Real-time Tracking</div>
+                <div style="font-size:12px;color:var(--text-muted)">Chrome extension sends activity every 10-15 seconds to the backend</div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div style="background:var(--dark-3);border-radius:12px;padding:16px">
+                <div style="font-size:20px;margin-bottom:8px">📊</div>
+                <div style="font-weight:600;margin-bottom:4px">Smart Classification</div>
+                <div style="font-size:12px;color:var(--text-muted)">Sites auto-classified as Productive, Neutral, or Distracting</div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div style="background:var(--dark-3);border-radius:12px;padding:16px">
+                <div style="font-size:20px;margin-bottom:8px">🎯</div>
+                <div style="font-weight:600;margin-bottom:4px">Focus Score</div>
+                <div style="font-size:12px;color:var(--text-muted)">Score = (Productive Time / Total Time) × 100</div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div style="background:var(--dark-3);border-radius:12px;padding:16px">
+                <div style="font-size:20px;margin-bottom:8px">🔥</div>
+                <div style="font-weight:600;margin-bottom:4px">Streak System</div>
+                <div style="font-size:12px;color:var(--text-muted)">Maintain focus score ≥ 70 daily to build your streak</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:24px;padding:16px;background:var(--dark-3);border-radius:12px;font-size:12px;color:var(--text-muted)">
+            <strong style="color:var(--text)">Quick Setup:</strong> Start the FastAPI backend → Load the Chrome extension → Browse the web → See your data here!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main-content -->
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ===================== CONFIG =====================
+  let API_BASE = localStorage.getItem('api_base') || 'http://localhost:8001';
+
+  // ===================== UTILITIES =====================
+  function fmtSeconds(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m`;
+    return `${Math.round(s)}s`;
+  }
+
+  function fmtTime(ts) {
+    return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  function toast(msg, type='info') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast-msg ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function badgeCat(cat) {
+    const icon = cat==='productive' ? '✅' : cat==='distracting' ? '❌' : '⚪';
+    return `<span class="badge-cat badge-${cat}">${icon} ${cat}</span>`;
+  }
+
+  async function apiFetch(path, opts={}) {
+    const res = await fetch(API_BASE + path, {
+      ...opts,
+      headers: {'Content-Type':'application/json', ...(opts.headers||{})},
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  // ===================== CHARTS =====================
+  let siteChart = null, breakdownChart = null;
+
+  function initCharts() {
+    Chart.defaults.color = '#8b89a0';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = 'Poppins';
+
+    const siteCtx = document.getElementById('siteChart').getContext('2d');
+    siteChart = new Chart(siteCtx, {
+      type: 'bar',
+      data: { labels: [], datasets: [{
+        label: 'Minutes',
+        data: [],
+        backgroundColor: [],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { callback: v => v+'m' } }
+        }
+      }
+    });
+
+    const bdCtx = document.getElementById('breakdownChart').getContext('2d');
+    breakdownChart = new Chart(bdCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Productive', 'Neutral', 'Distracting'],
+        datasets: [{
+          data: [0,0,0],
+          backgroundColor: ['rgba(0,184,148,0.8)', 'rgba(139,137,160,0.5)', 'rgba(225,112,85,0.8)'],
+          borderColor: ['#00b894','#8b89a0','#e17055'],
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } }
+      }
+    });
+  }
+
+  // ===================== DATA LOADING =====================
+  async function loadFocusScore() {
+    try {
+      const d = await apiFetch('/focus-score/');
+
+      // Score ring
+      const score = d.focus_score;
+      const offset = 188.4 - (score / 100 * 188.4);
+      document.getElementById('score-ring-fill').style.strokeDashoffset = offset;
+      document.getElementById('score-ring-text').textContent = score + '%';
+
+      const scoreColor = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--warning)' : 'var(--danger)';
+      document.getElementById('score-ring-fill').style.stroke = scoreColor;
+      document.getElementById('score-ring-text').style.color = scoreColor;
+
+      document.getElementById('focus-score-val').textContent = score;
+      document.getElementById('total-time-val').textContent = fmtSeconds(d.total_time);
+      document.getElementById('productive-time-val').textContent = fmtSeconds(d.productive_time);
+      document.getElementById('distracting-time-val').textContent = fmtSeconds(d.distracting_time);
+
+      const tot = d.total_time || 1;
+      document.getElementById('productive-bar').style.width = (d.productive_time/tot*100)+'%';
+      document.getElementById('distracting-bar').style.width = (d.distracting_time/tot*100)+'%';
+
+      document.getElementById('streak-days').textContent = d.streak_days;
+      document.getElementById('suggestion-text').textContent = d.suggestion;
+
+      // Breakdown chart
+      breakdownChart.data.datasets[0].data = [d.productive_time/60, d.neutral_time/60, d.distracting_time/60];
+      breakdownChart.update();
+
+    } catch(e) {
+      document.getElementById('suggestion-text').textContent = '⚠️ Could not connect to backend. Make sure FastAPI is running on ' + API_BASE;
+      toast('Cannot connect to backend API', 'error');
+    }
+  }
+
+  async function loadDailyReport() {
+    try {
+      const d = await apiFetch('/report/daily');
+
+      // Site chart
+      const sites = d.top_sites.slice(0,8);
+      const colors = sites.map(s =>
+        s.category === 'productive' ? 'rgba(0,184,148,0.75)' :
+        s.category === 'distracting' ? 'rgba(225,112,85,0.75)' :
+        'rgba(139,137,160,0.5)'
+      );
+
+      siteChart.data.labels = sites.map(s => s.domain);
+      siteChart.data.datasets[0].data = sites.map(s => Math.round(s.total_time/60));
+      siteChart.data.datasets[0].backgroundColor = colors;
+      siteChart.update();
+
+      // Top sites table
+      const tbody = document.getElementById('top-sites-body');
+      if (sites.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-globe"></i><p>No data yet</p></div></td></tr>`;
+      } else {
+        tbody.innerHTML = sites.map(s => `
+          <tr>
+            <td style="font-weight:500">${s.domain}</td>
+            <td>${badgeCat(s.category)}</td>
+            <td>${fmtSeconds(s.total_time)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="flex:1;height:4px;background:var(--dark-3);border-radius:2px">
+                  <div style="height:100%;border-radius:2px;width:${s.percentage}%;background:${
+                    s.category==='productive'?'var(--success)':s.category==='distracting'?'var(--danger)':'var(--text-muted)'
+                  }"></div>
+                </div>
+                <span style="font-size:11px;color:var(--text-muted)">${s.percentage}%</span>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+    } catch(e) { /* handled above */ }
+  }
+
+  async function loadActivityLogs() {
+    try {
+      const logs = await apiFetch('/activity/logs?limit=20');
+      const tbody = document.getElementById('activity-logs-body');
+      if (!logs.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-list-ul"></i><p>No activity logged</p></div></td></tr>`;
+      } else {
+        tbody.innerHTML = logs.map(l => `
+          <tr>
+            <td style="font-weight:500">${l.domain}</td>
+            <td>${badgeCat(l.category)}</td>
+            <td>${fmtSeconds(l.duration)}</td>
+            <td style="color:var(--text-muted)">${fmtTime(l.timestamp)}</td>
+          </tr>
+        `).join('');
+      }
+    } catch(e) { /* silently fail */ }
+  }
+
+  async function loadWeeklyReport() {
+    try {
+      const d = await apiFetch('/report/weekly');
+      document.getElementById('weekly-avg-score').textContent = d.average_focus_score;
+      document.getElementById('weekly-total-time').textContent = fmtSeconds(d.total_time);
+
+      const scores = Object.values(d.daily_scores);
+      const bestDay = scores.length ? Math.max(...scores) : 0;
+      document.getElementById('weekly-best-day').textContent = bestDay;
+      document.getElementById('week-range').textContent = d.week_start + ' → ' + d.week_end;
+
+      // Day bars
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const barsEl = document.getElementById('weekly-bars');
+
+      if (!Object.keys(d.daily_scores).length) {
+        barsEl.innerHTML = `<div class="empty-state"><i class="fa-solid fa-chart-bar"></i><p>No weekly data yet</p></div>`;
+      } else {
+        barsEl.innerHTML = Object.entries(d.daily_scores).map(([dt, score]) => {
+          const dayName = new Date(dt).toLocaleDateString('en',{weekday:'short'});
+          const color = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--warning)' : 'var(--danger)';
+          return `
+            <div class="day-row">
+              <div class="day-name">${dayName}</div>
+              <div class="day-bar-bg">
+                <div class="day-bar-fill" style="width:${score}%;background:${color}"></div>
+              </div>
+              <div class="day-score-label">${score}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Productive sites
+      const prodBody = document.getElementById('weekly-productive-body');
+      if (!d.top_productive_sites.length) {
+        prodBody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-code"></i><p>No data</p></div></td></tr>`;
+      } else {
+        prodBody.innerHTML = d.top_productive_sites.map(s => `
+          <tr>
+            <td style="color:var(--success);font-weight:500">${s.domain}</td>
+            <td>${fmtSeconds(s.total_time)}</td>
+            <td style="color:var(--text-muted)">${s.percentage}%</td>
+          </tr>
+        `).join('');
+      }
+
+      // Distracting sites
+      const distBody = document.getElementById('weekly-distracting-body');
+      if (!d.top_distracting_sites.length) {
+        distBody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-ban"></i><p>No data</p></div></td></tr>`;
+      } else {
+        distBody.innerHTML = d.top_distracting_sites.map(s => `
+          <tr>
+            <td style="color:var(--danger);font-weight:500">${s.domain}</td>
+            <td>${fmtSeconds(s.total_time)}</td>
+            <td style="color:var(--text-muted)">${s.percentage}%</td>
+          </tr>
+        `).join('');
+      }
+
+    } catch(e) { /* silently fail */ }
+  }
+
+  async function loadCustomSites() {
+    try {
+      const sites = await apiFetch('/activity/sites');
+      const tbody = document.getElementById('custom-sites-body');
+      if (!sites.length) {
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-sliders"></i><p>No custom rules</p></div></td></tr>`;
+      } else {
+        tbody.innerHTML = sites.map(s => `
+          <tr>
+            <td style="font-weight:500">${s.domain}</td>
+            <td>${badgeCat(s.category)}</td>
+            <td><button class="btn-danger-custom" onclick="deleteSite('${s.domain}')"><i class="fa-solid fa-trash"></i></button></td>
+          </tr>
+        `).join('');
+      }
+    } catch(e) { /* silently fail */ }
+  }
+
+  // ===================== ACTIONS =====================
+  async function addSiteCategory() {
+    const domain = document.getElementById('new-domain').value.trim();
+    const category = document.getElementById('new-category').value;
+    if (!domain) return toast('Please enter a domain', 'error');
+
+    try {
+      await apiFetch('/activity/sites', {
+        method:'POST',
+        body: JSON.stringify({domain, category})
+      });
+      toast(`${domain} → ${category}`, 'success');
+      document.getElementById('new-domain').value = '';
+      loadCustomSites();
+    } catch(e) {
+      toast('Failed to add site', 'error');
+    }
+  }
+
+  async function deleteSite(domain) {
+    try {
+      await apiFetch('/activity/sites/'+encodeURIComponent(domain), {method:'DELETE'});
+      toast('Rule removed', 'success');
+      loadCustomSites();
+    } catch(e) {
+      toast('Failed to remove', 'error');
+    }
+  }
+
+  async function testLogActivity() {
+    const url = document.getElementById('test-url').value.trim();
+    const duration = parseFloat(document.getElementById('test-duration').value);
+    if (!url) return toast('Please enter a URL', 'error');
+
+    try {
+      await apiFetch('/activity/', {
+        method:'POST',
+        body: JSON.stringify({url, duration, user_id:'default_user'})
+      });
+      toast('Activity logged!', 'success');
+      refreshAll();
+    } catch(e) {
+      toast('Failed to log activity', 'error');
+    }
+  }
+
+  async function saveApiUrl() {
+    const val = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+    API_BASE = val;
+    localStorage.setItem('api_base', val);
+
+    const status = document.getElementById('connection-status');
+    status.textContent = 'Testing...';
+    try {
+      const d = await apiFetch('/health');
+      status.style.color = 'var(--success)';
+      status.textContent = '✅ Connected! ' + JSON.stringify(d);
+      toast('API URL saved & connected', 'success');
+    } catch(e) {
+      status.style.color = 'var(--danger)';
+      status.textContent = '❌ Cannot connect to ' + val;
+      toast('Connection failed', 'error');
+    }
+  }
+
+  // ===================== PAGE NAV =====================
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick')?.includes(name)) n.classList.add('active');
+    });
+
+    const titles = {dashboard:'Dashboard', reports:'Reports', settings:'Settings', about:'About'};
+    document.getElementById('page-title').textContent = titles[name] || name;
+
+    if (name === 'reports') { loadWeeklyReport(); }
+    if (name === 'settings') { loadCustomSites(); }
+    closeSidebar();
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+  }
+
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  async function refreshAll() {
+    await Promise.all([loadFocusScore(), loadDailyReport(), loadActivityLogs()]);
+    toast('Data refreshed!', 'success');
+  }
+
+  // ===================== INIT =====================
+  function init() {
+    const now = new Date();
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    document.getElementById('api-url-input').value = API_BASE;
+
+    initCharts();
+    loadFocusScore();
+    loadDailyReport();
+    loadActivityLogs();
+
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+      const active = document.querySelector('.page.active')?.id;
+      if (active === 'page-dashboard') {
+        loadFocusScore();
+        loadDailyReport();
+        loadActivityLogs();
+      }
+    }, 30000);
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
